@@ -1,0 +1,38 @@
+services:
+  orchestrator:
+    build:
+      context: ..
+      dockerfile: orchestration/orchestrator/Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - INVENTORY_URL=http://inventory:8000
+      - PAYMENT_URL=http://payment:8000
+      - SHIPPING_URL=http://shipping:8000
+      - HTTP_TIMEOUT=5.0
+    depends_on: [inventory, payment, shipping]
+
+  inventory:
+    build:
+      context: ..
+      dockerfile: orchestration/inventory/Dockerfile
+    ports:
+      - "8011:8000"
+    environment:
+      - INITIAL_STOCK=5
+
+  payment:
+    build:
+      context: ..
+      dockerfile: orchestration/payment/Dockerfile
+    ports:
+      - "8012:8000"
+    environment:
+      - PAYMENT_LIMIT=1000
+
+  shipping:
+    build:
+      context: ..
+      dockerfile: orchestration/shipping/Dockerfile
+    ports:
+      - "8013:8000"

@@ -1,0 +1,65 @@
+services:
+  rabbitmq:
+    image: rabbitmq:3.13-management
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  order:
+    build:
+      context: ..
+      dockerfile: choreography/order/Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - RABBIT_URL=amqp://guest:guest@rabbitmq:5672/
+      - SAGA_EXCHANGE=saga
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+
+  inventory:
+    build:
+      context: ..
+      dockerfile: choreography/inventory/Dockerfile
+    ports:
+      - "8011:8000"
+    environment:
+      - RABBIT_URL=amqp://guest:guest@rabbitmq:5672/
+      - SAGA_EXCHANGE=saga
+      - INITIAL_STOCK=5
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+
+  payment:
+    build:
+      context: ..
+      dockerfile: choreography/payment/Dockerfile
+    ports:
+      - "8012:8000"
+    environment:
+      - RABBIT_URL=amqp://guest:guest@rabbitmq:5672/
+      - SAGA_EXCHANGE=saga
+      - PAYMENT_LIMIT=1000
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+
+  shipping:
+    build:
+      context: ..
+      dockerfile: choreography/shipping/Dockerfile
+    ports:
+      - "8013:8000"
+    environment:
+      - RABBIT_URL=amqp://guest:guest@rabbitmq:5672/
+      - SAGA_EXCHANGE=saga
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
